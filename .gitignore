@@ -1,0 +1,8 @@
+# secrets & local config — never commit real credentials
+*.local.ino
+secrets.h
+.env
+# build artifacts
+node_modules/
+__pycache__/
+*.bin

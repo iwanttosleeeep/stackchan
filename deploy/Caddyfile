@@ -1,0 +1,7 @@
+# Replace with your own domain. header_up keeps the MCP SDK's
+# DNS-rebinding guard happy behind the reverse proxy.
+claude.example.com {
+    reverse_proxy 127.0.0.1:8011 {
+        header_up Host 127.0.0.1:8011
+    }
+}
