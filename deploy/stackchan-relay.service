@@ -6,7 +6,9 @@ Wants=network-online.target
 [Service]
 WorkingDirectory=/opt/stackchan-relay
 Environment=STACKCHAN_TOKEN=<TOKEN>
-Environment=TTS_VOICE=en-GB-RyanNeural
+Environment=PIPER_MODEL=/opt/stackchan-relay/voices/en_GB-vctk-medium.onnx
+Environment=PIPER_SPEAKER=p275
+Environment=PIPER_LENGTH_SCALE=1.0
 ExecStart=/opt/stackchan-relay/.venv/bin/uvicorn server:app --host 127.0.0.1 --port 8011
 Restart=always
 RestartSec=3

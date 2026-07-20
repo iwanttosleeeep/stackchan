@@ -4,13 +4,22 @@
 以下命令在VPS上执行。
 
 ## 1. 装依赖
-    apt update && apt install -y python3-venv caddy ffmpeg
+    apt update && apt install -y python3-venv caddy
 
 ## 2. 部署服务
     mkdir -p /opt/stackchan-relay && cd /opt/stackchan-relay
     # 上传 relay/server.py 和 requirements.txt(Mac: scp server.py requirements.txt root@<VPS_IP>:/opt/stackchan-relay/)
     python3 -m venv .venv
     .venv/bin/pip install -r requirements.txt
+
+## 2.1 下载Piper英式英语声音
+    mkdir -p /opt/stackchan-relay/voices
+    /opt/stackchan-relay/.venv/bin/python -m piper.download_voices \
+      --data-dir /opt/stackchan-relay/voices en_GB-vctk-medium
+
+仓库默认使用VCTK的`p275`（speaker ID 55）。模型在relay启动时加载一次，
+后续每句话复用同一个ONNX session。`PIPER_LENGTH_SCALE=1.0`为正常语速；
+数值越小越快，越大越慢。
 
 ## 3. 生成token(先存密码管理器,再使用!)
     openssl rand -hex 24
@@ -31,6 +40,8 @@
 ## 6. 验收
     curl https://你的域名/healthz
     # 期望: {"ok":true,"robot_online":false}
+    journalctl -u stackchan-relay -n 30 --no-pager
+    # 应看到: Loaded Piper model ..., speaker p275 (55) ...
 
 ## 7. 挂进Claude.ai
 Settings → Connectors → Add custom connector → https://你的域名/mcp

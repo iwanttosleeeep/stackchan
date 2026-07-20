@@ -17,6 +17,8 @@
 #include <esp_camera.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
+#include <Drawable.h>
+#include "EmotionFace.hpp"
 
 // ---------------------------------------------------------------------------
 // CONFIG — fill these three in before flashing
@@ -25,7 +27,7 @@ static const char* WIFI_SSID = "YOUR_WIFI_SSID";      // 2.4 GHz only
 static const char* WIFI_PASS = "YOUR_WIFI_PASSWORD";
 static const char* TOKEN     = "YOUR_STACKCHAN_TOKEN";
 
-static const char* BASE_URL  = "https://claude.example.com";  // your relay domain
+static const char* BASE_URL  = "https://claude.sehnsucht.uk";  // your relay domain
 static const uint32_t POLL_TIMEOUT_MS = 25000;
 static const uint32_t RETRY_DELAY_MS  = 3000;
 static const size_t   AUDIO_MAX_BYTES = 2 * 1024 * 1024;
@@ -109,14 +111,276 @@ static void doWiggle()
     M5StackChan.Motion.goHome(700);
 }
 
-static void doEmote(const String& e)
+// Kaomoji-inspired faces are drawn as vectors, so no Japanese font or bitmap
+// assets are needed.  Eye and mouth parts share this lightweight style state.
+enum class EmoteStyle : uint8_t {
+    BuiltIn, Strained, Delighted, Dizzy, Determined, Worried, Humming,
+    Crying, Wink, Confused, Bashful, Pout, Kiss
+};
+
+static EmoteStyle activeStyle = EmoteStyle::BuiltIn;
+
+class BlankPart final : public Drawable {
+ public:
+    void draw(M5Canvas*, BoundingRect, DrawContext*) override {}
+};
+
+class KaomojiEye final : public Drawable {
+    bool isLeft;
+
+    static void xEye(M5Canvas* c, int x, int y, uint16_t color)
+    {
+        c->drawLine(x - 14, y - 12, x + 14, y + 12, color);
+        c->drawLine(x - 14, y + 12, x + 14, y - 12, color);
+        c->drawLine(x - 13, y - 12, x + 15, y + 12, color);
+        c->drawLine(x - 13, y + 12, x + 15, y - 12, color);
+    }
+
+    static void caretEye(M5Canvas* c, int x, int y, uint16_t color)
+    {
+        c->drawLine(x - 16, y + 8, x, y - 9, color);
+        c->drawLine(x, y - 9, x + 16, y + 8, color);
+        c->drawLine(x - 16, y + 9, x, y - 8, color);
+        c->drawLine(x, y - 8, x + 16, y + 9, color);
+    }
+
+    static void closedEye(M5Canvas* c, int x, int y, uint16_t color)
+    {
+        c->drawLine(x - 15, y, x + 15, y, color);
+        c->drawLine(x - 15, y + 1, x + 15, y + 1, color);
+    }
+
+ public:
+    explicit KaomojiEye(bool left) : isLeft(left) {}
+
+    void draw(M5Canvas* c, BoundingRect rect, DrawContext* ctx) override
+    {
+        const uint16_t color = ctx->getColorDepth() == 1
+            ? 1 : ctx->getColorPalette()->get(COLOR_PRIMARY);
+        const int x = rect.getCenterX();
+        const int y = rect.getCenterY();
+
+        const float eyeOpen = isLeft ? ctx->getLeftEyeOpenRatio()
+                                     : ctx->getRightEyeOpenRatio();
+        if (eyeOpen < 0.1f && activeStyle != EmoteStyle::Wink) {
+            closedEye(c, x, y, color);
+            return;
+        }
+
+        switch (activeStyle) {
+            case EmoteStyle::Strained:
+                xEye(c, x, y, color);
+                break;
+            case EmoteStyle::Delighted:
+            case EmoteStyle::Kiss:
+                caretEye(c, x, y, color);
+                break;
+            case EmoteStyle::Dizzy:
+                c->drawCircle(x, y, 17, color);
+                c->drawCircle(x, y, 10, color);
+                c->fillCircle(x + 6, y - 1, 3, color);
+                c->drawLine(x + 15, y + 8, x + 23, y + 15, color);
+                break;
+            case EmoteStyle::Determined:
+                c->drawLine(x - 17, y + (isLeft ? -9 : 9),
+                            x + 17, y + (isLeft ? 9 : -9), color);
+                c->fillCircle(x + (isLeft ? 5 : -5), y + 5, 5, color);
+                break;
+            case EmoteStyle::Worried:
+                c->drawLine(x - 16, y + (isLeft ? 8 : -8),
+                            x + 16, y + (isLeft ? -8 : 8), color);
+                c->fillCircle(x, y + 9, 4, color);
+                break;
+            case EmoteStyle::Humming:
+                closedEye(c, x, y, color);
+                break;
+            case EmoteStyle::Crying: {
+                c->drawLine(x - 15, y - 5, x, y + 5, color);
+                c->drawLine(x, y + 5, x + 15, y - 5, color);
+                const int tx = x + (isLeft ? 13 : -13);
+                c->fillCircle(tx, y + 20, 5, color);
+                c->fillTriangle(tx, y + 6, tx - 5, y + 19, tx + 5, y + 19, color);
+                break;
+            }
+            case EmoteStyle::Wink:
+                if (isLeft) caretEye(c, x, y, color);
+                else closedEye(c, x, y, color);
+                break;
+            case EmoteStyle::Confused:
+                if (isLeft) c->drawCircle(x, y, 17, color);
+                else c->drawCircle(x, y, 9, color);
+                c->fillCircle(x, y, isLeft ? 6 : 3, color);
+                break;
+            case EmoteStyle::Bashful:
+                c->drawLine(x - 15, y - 3, x, y + 6, color);
+                c->drawLine(x, y + 6, x + 15, y - 3, color);
+                for (int i = 0; i < 3; i++) {
+                    const int cheekX = x + (isLeft ? 30 : -30) + i * 5;
+                    c->drawLine(cheekX, y + 18, cheekX + 6, y + 10, color);
+                }
+                break;
+            case EmoteStyle::Pout:
+                c->fillCircle(x - 8, y, 8, color);
+                break;
+            case EmoteStyle::BuiltIn:
+                break;
+        }
+    }
+};
+
+class KaomojiMouth final : public Drawable {
+    static void musicNote(M5Canvas* c, int x, int y, uint16_t color)
+    {
+        c->fillCircle(x, y + 18, 5, color);
+        c->drawLine(x + 5, y + 18, x + 5, y - 8, color);
+        c->drawLine(x + 5, y - 8, x + 19, y - 3, color);
+        c->drawLine(x + 5, y - 6, x + 19, y - 1, color);
+    }
+
+    static void puckered(M5Canvas* c, int x, int y, uint16_t color)
+    {
+        c->fillCircle(x - 7, y, 7, color);
+        c->fillCircle(x + 7, y, 7, color);
+    }
+
+ public:
+    void draw(M5Canvas* c, BoundingRect rect, DrawContext* ctx) override
+    {
+        const uint16_t color = ctx->getColorDepth() == 1
+            ? 1 : ctx->getColorPalette()->get(COLOR_PRIMARY);
+        const int x = rect.getCenterX();
+        const int y = rect.getCenterY();
+        const float open = ctx->getMouthOpenRatio();
+
+        // Preserve lip-sync: while speaking, every style temporarily gets an
+        // animated open mouth, then returns to its kaomoji shape.
+        if (open > 0.15f) {
+            const int h = 5 + (int)(open * 27);
+            c->fillRoundRect(x - 23, y - h / 2, 46, h, 7, color);
+            return;
+        }
+
+        switch (activeStyle) {
+            case EmoteStyle::Strained:
+                c->drawLine(x - 22, y, x - 11, y - 6, color);
+                c->drawLine(x - 11, y - 6, x, y + 2, color);
+                c->drawLine(x, y + 2, x + 11, y - 6, color);
+                c->drawLine(x + 11, y - 6, x + 22, y, color);
+                break;
+            case EmoteStyle::Delighted:
+                c->fillTriangle(x - 27, y - 9, x + 27, y - 9, x, y + 25, color);
+                break;
+            case EmoteStyle::Dizzy:
+                c->drawLine(x - 22, y - 3, x - 8, y + 4, color);
+                c->drawLine(x - 8, y + 4, x + 8, y - 3, color);
+                c->drawLine(x + 8, y - 3, x + 22, y + 4, color);
+                break;
+            case EmoteStyle::Determined:
+                c->fillRect(x - 24, y - 2, 48, 5, color);
+                break;
+            case EmoteStyle::Worried:
+            case EmoteStyle::Crying:
+                c->drawLine(x - 24, y + 11, x, y - 8, color);
+                c->drawLine(x, y - 8, x + 24, y + 11, color);
+                break;
+            case EmoteStyle::Humming:
+                puckered(c, x, y, color);
+                musicNote(c, x + 75, y - 45, color);
+                break;
+            case EmoteStyle::Wink:
+            case EmoteStyle::Bashful:
+                c->drawLine(x - 25, y - 7, x, y + 12, color);
+                c->drawLine(x, y + 12, x + 25, y - 7, color);
+                break;
+            case EmoteStyle::Confused:
+                c->drawCircle(x, y, 10, color);
+                break;
+            case EmoteStyle::Pout:
+                puckered(c, x, y, color);
+                break;
+            case EmoteStyle::Kiss:
+                puckered(c, x, y, color);
+                c->fillCircle(x + 61, y - 32, 7, color);
+                c->fillCircle(x + 73, y - 32, 7, color);
+                c->fillTriangle(x + 55, y - 30, x + 79, y - 30, x + 67, y - 14, color);
+                break;
+            case EmoteStyle::BuiltIn:
+                break;
+        }
+    }
+};
+
+// Keep cloud names and the remote's cycle in one table.
+struct Emote {
+    const char* name;
+    Expression expression;
+    EmoteStyle style;
+};
+
+static const Emote EMOTES[] = {
+    {"neutral",    Expression::Neutral, EmoteStyle::BuiltIn},
+    {"happy",      Expression::Happy,   EmoteStyle::BuiltIn},
+    {"sleepy",     Expression::Sleepy,  EmoteStyle::BuiltIn},
+    {"omg",        Expression::Neutral, EmoteStyle::Pout},
+    {"angry",      Expression::Neutral, EmoteStyle::Pout},
+    {"wink",       Expression::Neutral, EmoteStyle::Pout},
+    {"sobbing",    Expression::Neutral, EmoteStyle::Pout},
+    {"crying",     Expression::Neutral, EmoteStyle::Pout},
+    {"pout",       Expression::Neutral, EmoteStyle::Pout},
+    {"whine",      Expression::Neutral, EmoteStyle::Pout},
+    {"cool",       Expression::Neutral, EmoteStyle::Pout},
+    {"surprised",  Expression::Neutral, EmoteStyle::Pout},
+    {"silent",     Expression::Neutral, EmoteStyle::Pout},
+    {"playful",    Expression::Neutral, EmoteStyle::Pout},
+    {"kiss",       Expression::Neutral, EmoteStyle::Pout},
+    {"awkward",    Expression::Neutral, EmoteStyle::Pout},
+    {"worried",    Expression::Neutral, EmoteStyle::Pout},
+    {"shocked",    Expression::Neutral, EmoteStyle::Pout},
+    {"shy",        Expression::Neutral, EmoteStyle::Pout},
+    {"thinking",   Expression::Neutral, EmoteStyle::Pout},
+};
+static constexpr size_t EMOTE_COUNT = sizeof(EMOTES) / sizeof(EMOTES[0]);
+static Face* defaultFace = nullptr;
+static Face* downloadedEmotionFace = nullptr;
+
+static void applyEmote(size_t emoteIndex)
 {
-    if      (e == "happy")  avatar.setExpression(Expression::Happy);
-    else if (e == "sleepy") avatar.setExpression(Expression::Sleepy);
-    else if (e == "doubt")  avatar.setExpression(Expression::Doubt);
-    else if (e == "sad")    avatar.setExpression(Expression::Sad);
-    else if (e == "angry")  avatar.setExpression(Expression::Angry);
-    else                    avatar.setExpression(Expression::Neutral);
+    const Emote& emote = EMOTES[emoteIndex % EMOTE_COUNT];
+    activeStyle = emote.style;
+    avatar.setIsAutoBlink(false);
+    avatar.setEyeOpenRatio(1.0f);
+    avatar.setMouthOpenRatio(0.0f);
+    avatar.setRightGaze(0.0f, 0.0f);
+    avatar.setLeftGaze(0.0f, 0.0f);
+
+    if (emote.style == EmoteStyle::BuiltIn) {
+        if (defaultFace) avatar.setFace(defaultFace);
+        avatar.setExpression(emote.expression);
+        avatar.setIsAutoBlink(true);
+    } else {
+        const size_t assetIndex = stackchan_emotions::findAsset(emote.name);
+        if (assetIndex < stackchan_emotions::ASSET_COUNT) {
+            stackchan_emotions::setActiveAsset(assetIndex);
+        }
+        if (!downloadedEmotionFace) {
+            downloadedEmotionFace = stackchan_emotions::createEmotionFace();
+        }
+        avatar.setFace(downloadedEmotionFace);
+        avatar.setExpression(Expression::Neutral);
+        avatar.setIsAutoBlink(false);
+    }
+}
+
+static bool doEmote(const String& name)
+{
+    for (size_t i = 0; i < EMOTE_COUNT; i++) {
+        if (name == EMOTES[i].name) {
+            applyEmote(i);
+            return true;
+        }
+    }
+    applyEmote(0);
+    return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -285,9 +549,7 @@ static void handleRC()
             break;
         case RC_WIGGLE: doWiggle(); break;
         case RC_EMOTE: {
-            static const Expression cyc[] = {Expression::Happy, Expression::Doubt,
-                                             Expression::Sleepy, Expression::Neutral};
-            avatar.setExpression(cyc[emoteCycle++ % 4]);
+            applyEmote(emoteCycle++);
             break;
         }
         case RC_PRIVACY:
@@ -313,6 +575,8 @@ static void handleCommand(JsonDocument& doc)
     String note = "";
 
     if (action == "speak") {
+        String expression = doc["expression"] | "";
+        if (expression.length() > 0) doEmote(expression);
         ok = doSpeak(doc["text"] | "", doc["audio"] | "");
         if (!ok) note = "audio fetch/play failed";
     } else if (action == "emote") {
@@ -372,7 +636,8 @@ void setup()
 
     camInit();                    // claim camera before BSP's loop starts
 
-    avatar.init();
+    avatar.init(8);
+    defaultFace = avatar.getFace();
     avatar.setExpression(Expression::Sleepy);
     avatar.setSpeechText("Connecting Wi-Fi...");
 
@@ -385,7 +650,7 @@ void setup()
         avatar.setExpression(Expression::Neutral);
     } else {
         avatar.setSpeechText("Wi-Fi failed (2.4GHz only!)");
-        avatar.setExpression(Expression::Sad);
+        doEmote("worried");
     }
 
     if (WiFi.status() == WL_CONNECTED) {

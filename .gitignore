@@ -2,7 +2,11 @@
 *.local.ino
 secrets.h
 .env
+.DS_Store
+.Rhistory
+__pycache__/
+*.pyc
 # build artifacts
 node_modules/
-__pycache__/
 *.bin
+.pio/

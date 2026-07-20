@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 256.25 2050 1537.5">
+
+<rect x="0" y="256.25" width="2050" height="1537.5" fill="#000000" /><defs>
+
+<style>.cls-1{fill:#000000;}.cls-2{fill:#ffc500;}.cls-3{fill:#ff9f1e;}.cls-4{fill:#ffe059;}.cls-5{fill:#ffffff;}.cls-6{fill:#4795ff;}</style>
+
+</defs>
+
+<title />
+
+<g data-name="Layer 1" id="Layer_1">
+
+</g>
+
+<g data-name="Layer 3" id="Layer_3">
+
+<path class="cls-5" d="M853.4,933.4c-2.3,52.4-31.1,93.6-64.3,92.2s-58.3-45.1-56-97.4,31-39.5,64.2-38S855.6,881,853.4,933.4Z" transform="translate(-216.44 -80.97)" />
+
+<circle class="cls-1" cx="826.5" cy="932.2" r="16.6" transform="translate(-216.44 -80.97)" />
+
+<path class="cls-5" d="M1196.6,933.4c2.3,52.4,31.1,93.6,64.3,92.2s58.3-45.1,56-97.4-31-39.5-64.2-38S1194.4,881,1196.6,933.4Z" transform="translate(216.44 -61.75)" />
+
+<circle class="cls-1" cx="1223.5" cy="932.2" r="16.6" transform="translate(216.44 -61.75)" />
+
+<path class="cls-5" d="M901.4,902.6H691a30,30,0,0,1,0-60H901.4a30,30,0,0,1,0,60Z" transform="translate(-216.44 -80.97)" />
+
+<path class="cls-5" d="M1359,902.6H1148.6a30,30,0,0,1,0-60H1359a30,30,0,0,1,0,60Z" transform="translate(216.44 -61.75)" />
+
+<path class="cls-5" d="M1181.7,1220.6H868.3a30,30,0,1,1,0-60h313.4a30,30,0,1,1,0,60Z" transform="translate(19.69 14.38)" />
+
+<path class="cls-6" d="M692.4,687.3h0A101.2,101.2,0,0,0,700,563.9l-62.6-92.1c-15.3-22.5-49.1-20.2-61.3,4l-50,99.5a101.2,101.2,0,0,0,23.7,121.4h0A101.2,101.2,0,0,0,692.4,687.3Z" transform="translate(-216.44 -80.97)" />
+
+</g>
+
+</svg>

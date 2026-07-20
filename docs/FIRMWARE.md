@@ -33,6 +33,7 @@
 1. controller/StickSenn/StickSenn.ino 把 ESPNOW_CHANNEL 改成上面的N。
 2. 板卡名先查: arduino-cli board listall | grep -i stick
 3. compile/upload同上,fqbn换成查到的StickC-Plus名。
+4. BtnB短按循环3种内置表情和17种去除黄色圆脸的 SVG 表情：`neutral → happy → sleepy → OMG → angry → wink → sobbing → crying → pout → whine → cool → surprised → silent → playful → kiss → awkward → worried → shocked → shy → thinking`；遥控器屏幕会显示本次选择的名称（云端 API 使用小写 `omg`）。
 
 ## 5. 已知联调点
 - 音量:setVolume(180),0-255自调。

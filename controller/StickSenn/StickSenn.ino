@@ -22,7 +22,7 @@
 #include <esp_wifi.h>
 
 // ------------------------- CONFIG -------------------------
-static const uint8_t ESPNOW_CHANNEL = 1;   // <-- match robot's boot message!
+static const uint8_t ESPNOW_CHANNEL = 11;   // <-- match robot's boot message!
 
 // JoyC hat: I2C 0x54 on StickC-Plus hat port (SDA=G0, SCL=G26)
 static const uint8_t JOY_ADDR = 0x54;
@@ -100,6 +100,16 @@ void setup()
 
 static uint32_t lastHeadSend = 0;
 static int16_t lastYaw = 90, lastPitch = 80;
+// Must match the receiver's EMOTES table.  Showing the selected name makes
+// the expression cycle predictable even when the robot is across the room.
+static const char* const EMOTE_NAMES[] = {
+    "neutral", "happy", "sleepy", "OMG", "angry", "wink",
+    "sobbing", "crying", "pout", "whine", "cool", "surprised",
+    "silent", "playful", "kiss", "awkward", "worried", "shocked",
+    "shy", "thinking",
+};
+static const size_t EMOTE_COUNT = sizeof(EMOTE_NAMES) / sizeof(EMOTE_NAMES[0]);
+static uint8_t emoteCycle = 0;
 
 void loop()
 {
@@ -109,7 +119,10 @@ void loop()
     if (M5.BtnA.wasHold())        { sendCmd(RC_PRIVACY); show("PRIVACY", "toggled"); }
     else if (M5.BtnA.wasClicked()){ sendCmd(RC_WIGGLE);  show("wiggle!"); }
     if (M5.BtnB.wasHold())        { sendCmd(RC_REPLAY);  show("replay"); }
-    else if (M5.BtnB.wasClicked()){ sendCmd(RC_EMOTE);   show("emote", "cycle"); }
+    else if (M5.BtnB.wasClicked()){
+        sendCmd(RC_EMOTE);
+        show("emote", EMOTE_NAMES[emoteCycle++ % EMOTE_COUNT]);
+    }
     if (M5.BtnPWR.wasClicked())   { sendCmd(RC_HOME);    show("home"); }
 
     // ---- joystick -> head, 15 Hz max, deadzone around center ----

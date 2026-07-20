@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 256.25 2050 1537.5">
+
+<rect x="0" y="256.25" width="2050" height="1537.5" fill="#000000" /><defs>
+
+<style>.cls-1{fill:#000000;}.cls-2{fill:#ffc500;}.cls-3{fill:#ff9f1e;}.cls-4{fill:#ffe059;}.cls-5{fill:#ffffff;}</style>
+
+</defs>
+
+<title />
+
+<g data-name="Layer 1" id="Layer_1">
+
+</g>
+
+<g data-name="Layer 3" id="Layer_3">
+
+<ellipse class="cls-5" cx="821.8" cy="930.1" rx="94.9" ry="60.2" transform="translate(-245.44 -77.97) matrix(0.04, -1, 1, 0.04, -143.08, 1710.87)" />
+
+<circle class="cls-1" cx="851.5" cy="891.5" r="16.6" transform="translate(-245.44 -77.97)" />
+
+<ellipse class="cls-5" cx="1323.9" cy="930.1" rx="60.2" ry="94.9" transform="translate(149.44 -58.75) translate(-39.1 58.3) rotate(-2.5)" />
+
+<circle class="cls-1" cx="1344.2" cy="891.5" r="16.6" transform="translate(149.44 -58.75)" />
+
+<path class="cls-5" d="M881.6,855.2H720.7a30,30,0,0,1,0-60H881.6a30,30,0,1,1,0,60Z" transform="translate(-245.44 -77.97)" />
+
+<path class="cls-5" d="M1360.9,855.2H1200a30,30,0,0,1,0-60h160.9a30,30,0,0,1,0,60Z" transform="translate(149.44 -58.75)" />
+
+<path class="cls-5" d="M1121.3,1334.6h0a30,30,0,1,1,0-60h0c24.6,0,37.3-13.1,38.2-22.1.5-5.7-6-13.7-26.3-17.7a30,30,0,1,1,11.5-58.9c24.2,4.8,43.2,14.5,56.5,29.1s19.9,33.8,18,53.3-13.4,40.7-31.4,54.7S1146.8,1334.6,1121.3,1334.6Z" transform="translate(-85.31 -0.62)" />
+
+<path class="cls-5" d="M1139,1235.4a30,30,0,0,1-5.8-59.5c12.7-2.4,27.2-8.6,26.3-17.7s-13.6-22.1-38.2-22.1h0a30,30,0,1,1,0-60h0c25.5,0,48.5,7.5,66.5,21.7s29.4,33.9,31.4,54.6a68.4,68.4,0,0,1-18,53.3c-13.3,14.6-32.3,24.4-56.5,29.1A27.6,27.6,0,0,1,1139,1235.4Z" transform="translate(-85.31 -0.62)" />
+
+</g>
+
+</svg>
